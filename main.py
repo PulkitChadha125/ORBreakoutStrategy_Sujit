@@ -1,8 +1,16 @@
 import pandas as pd
-import AngelIntegration
+import AngelIntegration,XtsIntegrationAcAgarwal
 from datetime import datetime, timedelta
 import time
 import traceback
+
+
+
+# xts integration call
+XtsIntegrationAcAgarwal.login()
+XtsIntegrationAcAgarwal.get_mastercontract_xts()
+
+
 
 def custom_round(price, symbol):
     rounded_price = None
@@ -73,6 +81,7 @@ def get_user_settings():
                 "Target4Lotsize": int(row['Target4Lotsize']),
                 "BreakEven": float(row['BreakEven']),
                 "ReEntry": int(row['ReEntry']),
+                "Expiery": row['Expiery'],
                 "runonce":False,
                 "BuyPrice": None,
                 "SellPrice": None,
@@ -157,10 +166,18 @@ def main_strategy():
                     if fifteenclose>fiveclose:
                         params["BuyPrice"]= fifteenclose + params["EntryBuffer"]
                         params["SellPrice"]= fiveclose - params["EntryBuffer"]
+                        orderlog = (
+                            f"{timestamp} Range created Buy Price={params['BuyPrice']} , sell price {params['SellPrice']}")
+                        write_to_order_logs(orderlog)
+                        print(orderlog)
 
                     else:
                         params["BuyPrice"] =  fiveclose + params["EntryBuffer"]
                         params["SellPrice"] = fifteenclose - params["EntryBuffer"]
+                        orderlog = (
+                            f"{timestamp} Range created Buy Price={params['BuyPrice']} , sell price {params['SellPrice']}")
+                        write_to_order_logs(orderlog)
+                        print(orderlog)
 
                 ltp=AngelIntegration.get_ltp(segment="NFO",symbol=params['Symbol'],token=get_token(params['Symbol']))
                 if ltp>=params["BuyPrice"]  and params["BuyPrice"] >0 and ltp>0 and (params["TradeType"] is None or params["TradeType"] == "BUYPE") :

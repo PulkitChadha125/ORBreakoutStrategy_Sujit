@@ -1,204 +1,194 @@
-# SMARTAPI-PYTHON
+# XTS-SDK-Client Python
 
-SMARTAPI-PYTHON is a Python library for interacting with Angel's Trading platform  ,that is a set of REST-like HTTP APIs that expose many capabilities required to build stock market investment and trading platforms. It lets you execute orders in real time..
+This is the XTS Python API Client library , which has both Marketdata and Interactive services.
+API Documentation for XTS-MarketData API and XTS-Trading API can be found in the below link.
 
+https://symphonyfintech.com/xts-market-data-front-end-api/
+
+https://symphonyfintech.com/xts-trading-front-end-api-v2/
 
 ## Installation
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install smartapi-python.
+### Prerequisites
 
-```bash
-pip install -r requirements_dev.txt       # for downloading the other required packages
-```
-
-## Usage
-
-```python
-# package import statement
-from SmartApi import SmartConnect #or from SmartApi.smartConnect import SmartConnect
-import pyotp
-from logzero import logger
-
-api_key = 'Your Api Key'
-username = 'Your client code'
-pwd = 'Your pin'
-smartApi = SmartConnect(api_key)
-try:
-    token = "Your QR value"
-    totp = pyotp.TOTP(token).now()
-except Exception as e:
-    logger.error("Invalid Token: The provided token is not valid.")
-    raise e
-
-correlation_id = "abcde"
-data = smartApi.generateSession(username, pwd, totp)
-
-if data['status'] == False:
-    logger.error(data)
+    Python 3.8 or above.
+    Internet Access.
     
-else:
-    # login api call
-    # logger.info(f"You Credentials: {data}")
-    authToken = data['data']['jwtToken']
-    refreshToken = data['data']['refreshToken']
-    # fetch the feedtoken
-    feedToken = smartApi.getfeedToken()
-    # fetch User Profile
-    res = smartApi.getProfile(refreshToken)
-    smartApi.generateToken(refreshToken)
-    res=res['data']['exchanges']
+    Execute below command:
+    pip install -r requirements.txt
 
-    #place order
-    try:
-        orderparams = {
-            "variety": "NORMAL",
-            "tradingsymbol": "SBIN-EQ",
-            "symboltoken": "3045",
-            "transactiontype": "BUY",
-            "exchange": "NSE",
-            "ordertype": "LIMIT",
-            "producttype": "INTRADAY",
-            "duration": "DAY",
-            "price": "19500",
-            "squareoff": "0",
-            "stoploss": "0",
-            "quantity": "1"
-            }
-        # Method 1: Place an order and return the order ID
-        orderid = smartApi.placeOrder(orderparams)
-        logger.info(f"PlaceOrder : {orderid}")
-        # Method 2: Place an order and return the full response
-        response = smartApi.placeOrderFullResponse(orderparams)
-        logger.info(f"PlaceOrder : {response}")
-    except Exception as e:
-        logger.exception(f"Order placement failed: {e}")
-
-    #gtt rule creation
-    try:
-        gttCreateParams={
-                "tradingsymbol" : "SBIN-EQ",
-                "symboltoken" : "3045",
-                "exchange" : "NSE", 
-                "producttype" : "MARGIN",
-                "transactiontype" : "BUY",
-                "price" : 100000,
-                "qty" : 10,
-                "disclosedqty": 10,
-                "triggerprice" : 200000,
-                "timeperiod" : 365
-            }
-        rule_id=smartApi.gttCreateRule(gttCreateParams)
-        logger.info(f"The GTT rule id is: {rule_id}")
-    except Exception as e:
-        logger.exception(f"GTT Rule creation failed: {e}")
-        
-    #gtt rule list
-    try:
-        status=["FORALL"] #should be a list
-        page=1
-        count=10
-        lists=smartApi.gttLists(status,page,count)
-    except Exception as e:
-        logger.exception(f"GTT Rule List failed: {e}")
-
-    #Historic api
-    try:
-        historicParam={
-        "exchange": "NSE",
-        "symboltoken": "3045",
-        "interval": "ONE_MINUTE",
-        "fromdate": "2021-02-08 09:00", 
-        "todate": "2021-02-08 09:16"
-        }
-        smartApi.getCandleData(historicParam)
-    except Exception as e:
-        logger.exception(f"Historic Api failed: {e}")
-    #logout
-    try:
-        logout=smartApi.terminateSession('Your Client Id')
-        logger.info("Logout Successfull")
-    except Exception as e:
-        logger.exception(f"Logout failed: {e}")
-
-    ```
-
-    ## Getting started with SmartAPI Websocket's
-
-    ```python
-    ####### Websocket V2 sample code #######
-
-    from SmartApi.smartWebSocketV2 import SmartWebSocketV2
-    from logzero import logger
-
-    AUTH_TOKEN = "Your Auth_Token"
-    API_KEY = "Your Api_Key"
-    CLIENT_CODE = "Your Client Code"
-    FEED_TOKEN = "Your Feed_Token"
-    correlation_id = "abc123"
-    action = 1
-    mode = 1
-    token_list = [
-        {
-            "exchangeType": 1,
-            "tokens": ["26009"]
-        }
-    ]
-    #retry_strategy=0 for simple retry mechanism
-    sws = SmartWebSocketV2(AUTH_TOKEN, API_KEY, CLIENT_CODE, FEED_TOKEN,max_retry_attempt=2, retry_strategy=0, retry_delay=10, retry_duration=30)
-
-    #retry_strategy=1 for exponential retry mechanism
-    # sws = SmartWebSocketV2(AUTH_TOKEN, API_KEY, CLIENT_CODE, FEED_TOKEN,max_retry_attempt=3, retry_strategy=1, retry_delay=10,retry_multiplier=2, retry_duration=30)
-
-    def on_data(wsapp, message):
-        logger.info("Ticks: {}".format(message))
-        # close_connection()
-
-    def on_control_message(wsapp, message):
-        logger.info(f"Control Message: {message}")
-
-    def on_open(wsapp):
-        logger.info("on open")
-        some_error_condition = False
-        if some_error_condition:
-            error_message = "Simulated error"
-            if hasattr(wsapp, 'on_error'):
-                wsapp.on_error("Custom Error Type", error_message)
-        else:
-            sws.subscribe(correlation_id, mode, token_list)
-            # sws.unsubscribe(correlation_id, mode, token_list1)
-
-    def on_error(wsapp, error):
-        logger.error(error)
-
-    def on_close(wsapp):
-        logger.info("Close")
-
-    def close_connection():
-        sws.close_connection()
-
-
-    # Assign the callbacks.
-    sws.on_open = on_open
-    sws.on_data = on_data
-    sws.on_error = on_error
-    sws.on_close = on_close
-    sws.on_control_message = on_control_message
-
-    sws.connect()
-    ####### Websocket V2 sample code ENDS Here #######
-
-    ########################### SmartWebSocket OrderUpdate Sample Code Start Here ###########################
-    from SmartApi.smartWebSocketOrderUpdate import SmartWebSocketOrderUpdate
-    client = SmartWebSocketOrderUpdate(AUTH_TOKEN, API_KEY, CLIENT_CODE, FEED_TOKEN)
-    client.connect()
-    ########################### SmartWebSocket OrderUpdate Sample Code End Here ###########################
+### Usage
+Check the config.ini file, need to add the root url keep source as WEBAPI and disable_ssl as true
 ```
-##Change-log
-##1.4.5
-- Upgraded TLS Version
+	[user]
+	source=WEBAPI
 
-##1.4.7
-- Added Error log file
+	[SSL]
+	disable_ssl=True
 
-##1.4.8
-- Intgrated EDIS, Brokerage Calculator, Option Greek, TopGainersLosers, PutRatio API
+	[root_url]
+	root=https://developers.symphonyfintech.in
+	broadcastMode=Full
+```
+
+#### Create XT Connect Object
+
+```js
+    """API Credentials"""  
+	API_KEY = "YOUR_API_KEY_HERE"
+	API_SECRET = "YOUR_API_SECRET_HERE"
+	XTS_API_BASE_URL = "https://xts-api.trading"
+	source = "WEBAPI"
+
+	"""Make XTSConnect object by passing your interactive API appKey, secretKey and source"""
+	xt = XTSConnect(API_KEY, API_SECRET, source)
+```
+
+#### Login
+To login into API call the login service which will return a token. This token will help you to access other services throughout the session.
+```js
+	"""Marketdata Login"""
+    response = xt.marketdata_login()
+	
+	"""Interactive Login"""
+	response = xt.interactive_login()
+	
+```
+
+#### Subscribe
+To Subscribe to symbol use marketdata API. It returns Subscribe Response object which will contain the tick data like LTP, Open, High etc
+```js
+	"""instruments list"""
+	instruments = [{'exchangeSegment': 1, 'exchangeInstrumentID': 2885},{'exchangeSegment': 1, 'exchangeInstrumentID': 22}]
+
+	"""Send Subscription Request"""
+	response = xt.send_subscription(
+    Instruments=instruments,
+    xtsMessageCode=1502)
+```
+
+#### Quotes
+Quote service returns Asks, Bids and Touchline
+```js
+	"""instruments list"""
+	instruments = [
+		{'exchangeSegment': 1, 'exchangeInstrumentID': 2885},
+		{'exchangeSegment': 1, 'exchangeInstrumentID': 22}]
+
+	"""Get Quote Request"""
+	response = xt.get_quote(
+		Instruments=instruments,
+		xtsMessageCode=1504,
+		publishFormat='JSON')
+```
+#### PlaceOrder
+To Place an order you need to use Interactive API. Response will contain an orderid.
+```js
+"""Place Order Request"""
+response = xt.place_order(
+    exchangeSegment=xt.EXCHANGE_NSECM,
+    exchangeInstrumentID=2885,
+    productType=xt.PRODUCT_MIS,
+    orderType=xt.ORDER_TYPE_MARKET,
+    orderSide=xt.TRANSACTION_TYPE_BUY,
+    timeInForce=xt.VALIDITY_DAY,
+    disclosedQuantity=0,
+    orderQuantity=10,
+    limitPrice=0,
+    stopPrice=0,
+    orderUniqueIdentifier="454845")
+```
+
+#### CancelOrder
+To Cancel an order you need to user Interactive api and In response you will get orderid.
+```js
+  """Cancel Orders Request"""
+    response = xt.cancel_order(
+        appOrderID=OrderID,
+        orderUniqueIdentifier='454845')
+ ```
+ 
+ #### Streams and Events
+ Events such as TouchLine, MarketData, CandleData, OpenInterest and Index are received from socket.To get those events XTSAPIMarketdataEvents interface needs to be implemented. 
+ Event will be received in the respective overridden methods.
+ ```js
+   # Callback for connection
+	def on_connect():
+		"""Connect from the socket."""
+		print('Market Data Socket connected successfully!')
+
+		# Subscribe to instruments
+		response = xt.send_subscription(Instruments, 1501)
+		print("res: ", response)
+
+
+	# Callback on receiving message
+	def on_message(data):
+		print('I received a message!')
+
+	# Callback for message code 1502 FULL
+	def on_message1502_json_full(data):
+		print('I received a 1502 Market depth message!' + data)
+		message = "1502 >> #{id} >> {data}".format(id=2885, data=data)
+		sock.send(message)
+
+	# Callback for message code 1504 FULL
+	def on_message1504_json_full(data):
+		print('I received a 1504 Index data message!' + data)
+
+	# Callback for message code 1505 FULL
+	def on_message1505_json_full(data):
+		print('I received a 1505 Candle data message!' + data)
+
+	# Callback for message code 1510 FULL
+	def on_message1510_json_full(data):
+		print('I received a 1510 Open interest message!' + data)
+
+	# Callback for message code 1501 FULL
+	def on_message1501_json_full(data):
+		print('I received a 1510 Level1,Touchline message!' + data)
+		message = "1501 >> #{id} >> {data}".format(id=2885, data=data)
+		sock.send(message)
+
+	# Callback for message code 1502 PARTIAL
+	def on_message1502_json_partial(data):
+		print('I received a 1502 partial message!' + data)
+
+	# Callback for message code 1504 PARTIAL
+	def on_message1504_json_partial(data):
+		print('I received a 1504 Index data message!' + data)
+
+	# Callback for message code 1505 PARTIAL
+	def on_message1505_json_partial(data):
+		print('I received a 1505 Candle data message!' + data)
+
+	# Callback for message code 1510 PARTIAL
+	def on_message1510_json_partial(data):
+		print('I received a 1510 Open interest message!' + data)
+
+	# Callback for message code 1501 PARTIAL
+	def on_message1501_json_partial(data):
+		now = datetime.now()
+		today = now.strftime("%H:%M:%S")
+		print(today, 'in main 1501 partial Level1,Touchline message!' + data + ' \n')
+		print('I received a 1510 Level1,Touchline message!' + data)
+
+	# Callback for disconnection
+	def on_disconnect():
+		print('Market Data Socket disconnected!')
+
+	# Callback for error
+	def on_error(data):
+		"""Error from the socket."""
+		print('Market Data Error', data)
+ ```
+
+### Examples
+Example code demonstrating how to use XTS Api can be found in xts-python-api-sdk
+
+Example.py : Examples of all the API calls for Interactive as well as Marketdata APIs
+
+InteractiveSocketExample.py : Interactive Socket Streaming Example
+
+MarketdataSocketExample.py : Marketdata Socket Streaming Example
+
