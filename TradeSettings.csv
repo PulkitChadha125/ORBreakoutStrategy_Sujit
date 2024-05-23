@@ -1,0 +1,2 @@
+Symbol,lotsize,StrikeSelectionType,StrikeDistance,Stoploss,EntryBuffer,Target1,Target2,Target3,Target4,Target1Lotsize,Target2Lotsize,Target3Lotsize,Target4Lotsize,BreakEven,ReEntry,BaseSymbol
+NIFTY30MAY24FUT,25,ATM,100,10,1,1,1,1,1,1,1,1,1,1,1,NIFTY
