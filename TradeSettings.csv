@@ -1,2 +1,2 @@
-Symbol,lotsize,StrikeSelectionType,StrikeDistance,Stoploss,EntryBuffer,Target1,Target2,Target3,Target4,Target1Lotsize,Target2Lotsize,Target3Lotsize,Target4Lotsize,BreakEven,ReEntry,BaseSymbol,Expiery
-NIFTY30MAY24FUT,25,ATM,100,10,1,1,1,1,1,1,1,1,1,1,1,NIFTY
+Symbol,lotsize,StrikeSelectionType,StrikeDistance,Stoploss,EntryBuffer,Target1,Target2,Target3,Target4,Target1Lotsize,Target2Lotsize,Target3Lotsize,Target4Lotsize,BreakEven,ReEntry,BaseSymbol,Expiery,TradeExpiery
+NIFTY30MAY24FUT,25,ATM,100,10,1,1,1,1,1,1,1,1,1,1,1,NIFTY,30-May-24,30-May-24
