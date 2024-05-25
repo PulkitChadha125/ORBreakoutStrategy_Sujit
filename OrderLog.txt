@@ -1,1 +1,1 @@
-23/05/2024 20:19:32 Range created Buy Price=23009.0 , sell price 22999.0
+24/05/2024 23:28:28 Range created Buy Price=23016.4 , sell price 23011.0

@@ -1,3 +1,3 @@
 @echo off
-"C:\Users\Administrator\AppData\Local\Programs\Python\Python310\python.exe" "C:\Users\Administrator\Desktop\RaveSptrendVwapRsiProject1\RaveSptrendVwapRsiProject1\MainStrategy.py"
+"C:\Users\pulki\AppData\Local\Programs\Python\Python311\python.exe" "D:\Desktop\python projects\ORBreakoutStrategy\main.py"
 pause

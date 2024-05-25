@@ -3,8 +3,6 @@ from datetime import datetime, timedelta
 from Connect import XTSConnect
 import time
 import traceback
-
-
 #======= xts integration ===================
 xtskey="42fcf9710a97b2e7e05944"
 xtssecret="Ykxs172$I9"

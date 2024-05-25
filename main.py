@@ -83,7 +83,7 @@ def get_user_settings():
                 "optionSymbolToken": None,
                 "optionSymbolltp": None,
                 "underlyinfltp":None,
-                "remaining":None,"slexecuted":False,"targetexecuted":False,
+                "remaining":None,"slexecuted":False,"targetexecuted":False,"TradeExecuted":None,
                 "runtime": datetime.now(),"previousclose":None,"count":0,"TradeExpiery":str(row['Expiery']),"tradeltp":None
             }
             result_dict[row['Symbol']] = symbol_dict
@@ -198,14 +198,35 @@ def main_strategy():
                                                                          token=get_token(params['optionSymbol']))
                 ltp=AngelIntegration.get_ltp(segment="NFO", symbol=params['Symbol'],
                                                                          token=get_token(params['Symbol']))
+
+
+                # reseting price in range
+
+
+                if (
+                        (params["slexecuted"] == True or params["targetexecuted"] == True)  and
+                        (params["TradeType"] == "BUYPE" or params["TradeType"] == "BUYCE" ) and
+                        params["TradeExecuted"] == False and
+                        params['previousclose']<params["BuyPrice"] and
+                        params['previousclose']>params["SellPrice"]
+                ):
+                    params["TradeType"] = None
+
+                # reentry code BUYPE i have doubts
+
                 if (
                         params["count"] <= params["ReEntry"] and
-                        params["slexecuted"] == True and ltp < params["SellPrice"] and params["TradeType"] == "BUYPE" and
-                        params["optionSymbolltp"] <= params["tradeltp"]
+                        params["slexecuted"] == True and
+                        ltp < params["SellPrice"] and
+                        params["TradeType"] == "BUYPE" and
+                        params["optionSymbolltp"] >= params["tradeltp"]
                 ):
                     params["count"] = params["count"] + 1
                     params["TradeType"] = "BUYPE"
                     params["underlyinfltp"] = ltp
+                    params["TradeExecuted"] = True
+                    params["slexecuted"] = False
+                    params["targetexecuted"] =False
 
                     if params["StrikeSelectionType"] == "ATM":
                         strike = custom_round(int(float(ltp)), params['BaseSymbol'])
@@ -234,24 +255,29 @@ def main_strategy():
                     params["tgt4"] = params["optionSymbolltp"] - params["Target4"]
                     params["sl"] = params["optionSymbolltp"] + params["Stoploss"]
                     params["brkevn"] = params["optionSymbolltp"] - params["BreakEven"]
-                    XtsIntegrationAcAgarwal.Buyorderplacement(lotsize=params['lotsize'], expiery=params["Expiery"],
-                                                              strike=params["strike"],
-                                                              basesymbol=params['BaseSymbol'], contract=4)
+                    # XtsIntegrationAcAgarwal.Buyorderplacement(lotsize=params['lotsize'], expiery=params["Expiery"],
+                    #                                           strike=params["strike"],
+                    #                                           basesymbol=params['BaseSymbol'], contract=4)
                     orderlog = (
                         f"{timestamp} Buy order executed PUT side @ {params['BaseSymbol']}@ {ltp} ,CONTRACT= {params['optionSymbol']} "
                         f"@{params['optionSymbolltp']} @ lotsize={params['lotsize']}, tp1={params['tgt1']},"
                         f"tp2={params['tgt2']},tp3={params['tgt3']},tp4={params['tgt4']},sl={params['sl']},brkeven={params['brkevn']}")
                     write_to_order_logs(orderlog)
                     print(orderlog)
+                # reentry code BUYCE
 
                 if (
                         params["count"] <= params["ReEntry"] and
-                        params["slexecuted"] == True and ltp>params["BuyPrice"]  and params["TradeType"] == "BUYCE" and
+                        params["slexecuted"] == True and ltp>params["BuyPrice"]  and
+                        params["TradeType"] == "BUYCE" and
                         params["optionSymbolltp"]>=params["tradeltp"]
                 ):
-                    params["slexecuted"] =False
+
                     params["TradeType"] = "BUYCE"
                     params["underlyinfltp"] = ltp
+                    params["TradeExecuted"] = True
+                    params["slexecuted"] = False
+                    params["targetexecuted"] = False
                     params["count"] = params["count"] + 1
                     if params["StrikeSelectionType"] == "ATM":
                         strike = custom_round(int(float(ltp)), params['BaseSymbol'])
@@ -281,9 +307,9 @@ def main_strategy():
                     params["tgt4"] = params["optionSymbolltp"] + params["Target4"]
                     params["sl"] = params["optionSymbolltp"] - params["Stoploss"]
                     params["brkevn"] = params["optionSymbolltp"] + params["BreakEven"]
-                    XtsIntegrationAcAgarwal.Buyorderplacement(lotsize=params['lotsize'], expiery=params["Expiery"],
-                                                              strike=params["strike"],
-                                                              basesymbol=params['BaseSymbol'], contract=3)
+                    # XtsIntegrationAcAgarwal.Buyorderplacement(lotsize=params['lotsize'], expiery=params["Expiery"],
+                    #                                           strike=params["strike"],
+                    #                                           basesymbol=params['BaseSymbol'], contract=3)
 
                     orderlog = (
                         f"{timestamp} Buy order executed call side @ {params['BaseSymbol']}@ {ltp} ,CONTRACT= {params['optionSymbol']}"
@@ -297,6 +323,8 @@ def main_strategy():
                 # ):
                 #     params["TradeType"] =None
 
+                #  mainentry
+
                 if (
                         params["count"]<=params["ReEntry"] and
                         params['previousclose']>=params["BuyPrice"]  and
@@ -305,12 +333,17 @@ def main_strategy():
                 ):
 
                     if params["TradeType"] == "BUYPE":
+                        # XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['remaining'],
+                        #                                            expiery=params["Expiery"],
+                        #                                            strike=params["strike"],
+                        #                                            basesymbol=params['BaseSymbol'], contract=4)
                         orderlog = (
                             f"{timestamp} Signal Switch to BUY CALL  @ {ltp}, remaining qty exit = {params['remaining']}")
                         write_to_order_logs(orderlog)
                         print(orderlog)
 
                     params["TradeType"]= "BUYCE"
+                    params["TradeExecuted"]= True
                     params["underlyinfltp"]=ltp
                     params["count"]=params["count"]+1
                     if params["StrikeSelectionType"] == "ATM":
@@ -325,7 +358,7 @@ def main_strategy():
                         strike = custom_round(int(float(ltp)), params['BaseSymbol'])
                         callstrike = int(strike) + int(params["StrikeDistance"])
                         params["strike"] = callstrike
-
+                    params["remaining"] = params['lotsize']
                     date_obj = datetime.strptime(params["TradeExpiery"], "%d-%b-%y")
                     formatted_date = date_obj.strftime("%d%b%y").upper()
                     print(formatted_date)
@@ -341,9 +374,9 @@ def main_strategy():
                     params["tgt4"] = params["optionSymbolltp"] + params["Target4"]
                     params["sl"] = params["optionSymbolltp"] - params["Stoploss"]
                     params["brkevn"] = params["optionSymbolltp"] + params["BreakEven"]
-                    XtsIntegrationAcAgarwal.Buyorderplacement(lotsize=params['lotsize'], expiery=params["Expiery"],
-                                                              strike=params["strike"],
-                                                              basesymbol=params['BaseSymbol'], contract=3)
+                    # XtsIntegrationAcAgarwal.Buyorderplacement(lotsize=params['lotsize'], expiery=params["Expiery"],
+                    #                                           strike=params["strike"],
+                    #                                           basesymbol=params['BaseSymbol'], contract=3)
 
                     orderlog=(f"{timestamp} Buy order executed call side @ {params['BaseSymbol']}@ {ltp} ,CONTRACT= {params['optionSymbol']}"
                               f" @{params['optionSymbolltp']} @ lotsize={params['lotsize']}, tp1={params['tgt1']},"
@@ -358,6 +391,10 @@ def main_strategy():
                         (params["TradeType"] is None or params["TradeType"] == "BUYCE")
                 ):
                     if params["TradeType"] == "BUYCE":
+                        # XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['remaining'],
+                        #                                            expiery=params["Expiery"],
+                        #                                            strike=params["strike"],
+                        #                                            basesymbol=params['BaseSymbol'], contract=4)
                         orderlog = (
                             f"{timestamp} Signal Switch to BUY PUT  @ {ltp}, remaining qty exit = {params['remaining']}")
                         write_to_order_logs(orderlog)
@@ -365,6 +402,7 @@ def main_strategy():
                     params["count"] = params["count"] + 1
                     params["TradeType"]= "BUYPE"
                     params["underlyinfltp"] = ltp
+                    params["TradeExecuted"] = True
 
                     if params["StrikeSelectionType"] == "ATM":
                         strike = custom_round(int(float(ltp)), params['BaseSymbol'])
@@ -393,8 +431,8 @@ def main_strategy():
                     params["tgt4"] = params["optionSymbolltp"] - params["Target4"]
                     params["sl"] = params["optionSymbolltp"] + params["Stoploss"]
                     params["brkevn"] = params["optionSymbolltp"] - params["BreakEven"]
-                    XtsIntegrationAcAgarwal.Buyorderplacement(lotsize=params['lotsize'],expiery=params["Expiery"],strike=params["strike"],
-                                                              basesymbol=params['BaseSymbol'],contract=4)
+                    # XtsIntegrationAcAgarwal.Buyorderplacement(lotsize=params['lotsize'],expiery=params["Expiery"],strike=params["strike"],
+                    #                                           basesymbol=params['BaseSymbol'],contract=4)
                     orderlog = (
                         f"{timestamp} Buy order executed PUT side @ {params['BaseSymbol']}@ {ltp} ,CONTRACT= {params['optionSymbol']} "
                         f"@{params['optionSymbolltp']} @ lotsize={params['lotsize']}, tp1={params['tgt1']},"
@@ -406,29 +444,29 @@ def main_strategy():
                     if params["optionSymbolltp"]>=params["tgt1"] and params["tgt1"]>0:
                         params["tgt1"]=0
                         params["remaining"]= params['remaining']-params['Target1Lotsize']
-                        XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target1Lotsize'], expiery=params["Expiery"],
-                                                                  strike=params["strike"],
-                                                                  basesymbol=params['BaseSymbol'], contract=3)
+                        # XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target1Lotsize'], expiery=params["Expiery"],
+                        #                                           strike=params["strike"],
+                        #                                           basesymbol=params['BaseSymbol'], contract=3)
                         orderlog = (f"{timestamp} Target 1 executed BUY CALL @ {ltp}, partial qty exit = {params['Target1Lotsize']}")
                         write_to_order_logs(orderlog)
                         print(orderlog)
                     if params["optionSymbolltp"]>=params["tgt2"] and params["tgt2"]>0:
                         params["tgt2"] = 0
                         params["remaining"] = params['remaining'] - params['Target2Lotsize']
-                        XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target2Lotsize'],
-                                                                   expiery=params["Expiery"],
-                                                                   strike=params["strike"],
-                                                                   basesymbol=params['BaseSymbol'], contract=3)
+                        # XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target2Lotsize'],
+                        #                                            expiery=params["Expiery"],
+                        #                                            strike=params["strike"],
+                        #                                            basesymbol=params['BaseSymbol'], contract=3)
                         orderlog = (f"{timestamp} Target 2 executed BUY CALL  @ {ltp}, partial qty exit = {params['Target2Lotsize']}")
                         write_to_order_logs(orderlog)
                         print(orderlog)
                     if params["optionSymbolltp"]>=params["tgt3"] and params["tgt3"]>0:
                         params["tgt3"] = 0
                         params["remaining"] = params['remaining'] - params['Target3Lotsize']
-                        XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target3Lotsize'],
-                                                                   expiery=params["Expiery"],
-                                                                   strike=params["strike"],
-                                                                   basesymbol=params['BaseSymbol'], contract=3)
+                        # XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target3Lotsize'],
+                        #                                            expiery=params["Expiery"],
+                        #                                            strike=params["strike"],
+                        #                                            basesymbol=params['BaseSymbol'], contract=3)
                         orderlog = (f"{timestamp} Target 3 executed BUY CALL  @ {ltp}, partial qty exit = {params['Target3Lotsize']}")
                         write_to_order_logs(orderlog)
                         print(orderlog)
@@ -436,11 +474,11 @@ def main_strategy():
                         params["tgt4"] = 0
                         params["remaining"] = 0
                         params["targetexecuted"] = True
-
-                        XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target4Lotsize'],
-                                                                   expiery=params["Expiery"],
-                                                                   strike=params["strike"],
-                                                                   basesymbol=params['BaseSymbol'], contract=3)
+                        params["TradeExecuted"] = False
+                        # XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target4Lotsize'],
+                        #                                            expiery=params["Expiery"],
+                        #                                            strike=params["strike"],
+                        #                                            basesymbol=params['BaseSymbol'], contract=3)
                         orderlog = (f"{timestamp} Target 4 executed BUY CALL  @ {ltp}, partial qty exit = {params['Target4Lotsize']}")
                         write_to_order_logs(orderlog)
                         print(orderlog)
@@ -453,43 +491,46 @@ def main_strategy():
 
                     if params["optionSymbolltp"]<=params["sl"] and params["sl"]>0:
                         params["sl"]=0
+
                         params["slexecuted"]= True
-                        XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['remaining'],
-                                                                   expiery=params["Expiery"],
-                                                                   strike=params["strike"],
-                                                                   basesymbol=params['BaseSymbol'], contract=3)
+                        params["TradeExecuted"] = False
+                        # XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['remaining'],
+                        #                                            expiery=params["Expiery"],
+                        #                                            strike=params["strike"],
+                        #                                            basesymbol=params['BaseSymbol'], contract=3)
                         orderlog = (f"{timestamp} stoploss executed BUY CALL  @{ltp}")
                         write_to_order_logs(orderlog)
                         print(orderlog)
+                        params["remaining"] = 0
 
                 if params["TradeType"]== "BUYPE" and params['optionSymbol']  is not None and params["optionSymbolltp"]is not None:
                     if params["optionSymbolltp"]<=params["tgt1"] and params["tgt1"]>0:
                         params["tgt1"]=0
                         params["remaining"] = params['remaining'] - params['Target1Lotsize']
-                        XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target1Lotsize'],
-                                                                   expiery=params["Expiery"],
-                                                                   strike=params["strike"],
-                                                                   basesymbol=params['BaseSymbol'], contract=4)
+                        # XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target1Lotsize'],
+                        #                                            expiery=params["Expiery"],
+                        #                                            strike=params["strike"],
+                        #                                            basesymbol=params['BaseSymbol'], contract=4)
                         orderlog = (f"{timestamp} Target 1 executed BUY PUT@ {ltp}, partial qty exit = {params['Target1Lotsize']}")
                         write_to_order_logs(orderlog)
                         print(orderlog)
                     if params["optionSymbolltp"]<=params["tgt2"] and params["tgt2"]>0:
                         params["tgt2"] = 0
                         params["remaining"] = params['remaining'] - params['Target2Lotsize']
-                        XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target2Lotsize'],
-                                                                   expiery=params["Expiery"],
-                                                                   strike=params["strike"],
-                                                                   basesymbol=params['BaseSymbol'], contract=4)
+                        # XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target2Lotsize'],
+                        #                                            expiery=params["Expiery"],
+                        #                                            strike=params["strike"],
+                        #                                            basesymbol=params['BaseSymbol'], contract=4)
                         orderlog = (f"{timestamp} Target 2 executed BUY PUT  @ {ltp}, partial qty exit = {params['Target2Lotsize']}")
                         write_to_order_logs(orderlog)
                         print(orderlog)
                     if params["optionSymbolltp"]<=params["tgt3"] and params["tgt3"]>0:
                         params["tgt3"] = 0
                         params["remaining"] = params['remaining'] - params['Target3Lotsize']
-                        XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target3Lotsize'],
-                                                                   expiery=params["Expiery"],
-                                                                   strike=params["strike"],
-                                                                   basesymbol=params['BaseSymbol'], contract=4)
+                        # XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target3Lotsize'],
+                        #                                            expiery=params["Expiery"],
+                        #                                            strike=params["strike"],
+                        #                                            basesymbol=params['BaseSymbol'], contract=4)
                         orderlog = (f"{timestamp} Target 3 executed BUY PUT  @ {ltp}, partial qty exit = {params['Target3Lotsize']}")
                         write_to_order_logs(orderlog)
                         print(orderlog)
@@ -497,10 +538,11 @@ def main_strategy():
                         params["tgt4"] = 0
                         params["remaining"] =0
                         params["targetexecuted"] = True
-                        XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target4Lotsize'],
-                                                                   expiery=params["Expiery"],
-                                                                   strike=params["strike"],
-                                                                   basesymbol=params['BaseSymbol'], contract=4)
+                        params["TradeExecuted"] = False
+                        # XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['Target4Lotsize'],
+                        #                                            expiery=params["Expiery"],
+                        #                                            strike=params["strike"],
+                        #                                            basesymbol=params['BaseSymbol'], contract=4)
                         orderlog = (f"{timestamp} Target 4 executed BUY PUT  @ {ltp}, partial qty exit = {params['Target4Lotsize']}")
                         write_to_order_logs(orderlog)
                         print(orderlog)
@@ -512,14 +554,17 @@ def main_strategy():
                         print(orderlog)
                     if params["optionSymbolltp"]>=params["sl"] and params["sl"]>0:
                         params["sl"]=0
+
                         params["slexecuted"] = True
-                        XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['remaining'],
-                                                                   expiery=params["Expiery"],
-                                                                   strike=params["strike"],
-                                                                   basesymbol=params['BaseSymbol'], contract=4)
+                        params["TradeExecuted"] = False
+                        # XtsIntegrationAcAgarwal.Sellorderplacement(lotsize=params['remaining'],
+                        #                                            expiery=params["Expiery"],
+                        #                                            strike=params["strike"],
+                        #                                            basesymbol=params['BaseSymbol'], contract=4)
                         orderlog = (f"{timestamp} stoploss executed BUY put  @{ltp}")
                         write_to_order_logs(orderlog)
                         print(orderlog)
+                        params["remaining"] = 0
 
 
     except Exception as e:
