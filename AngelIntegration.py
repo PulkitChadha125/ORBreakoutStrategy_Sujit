@@ -78,7 +78,7 @@ def get_historical_data(symbol,token,timeframe,segment):
         df = pd.DataFrame(res['data'], columns=['date', 'open', 'high', 'low', 'close', 'flag'])
         df['date'] = pd.to_datetime(df['date'])
 
-        return df.tail(3)
+        return df.tail(4)
 
     except Exception as e:
         logger.exception(f"Historic Api failed: {e}")

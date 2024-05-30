@@ -5,23 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="edc1fc04-ddc0-487d-b1d3-a46a9e9a1af0" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/ORBreakoutStrategy.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Instrument.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Instrument.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/OrderLog.txt" beforeDir="false" afterPath="$PROJECT_DIR$/OrderLog.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/XtsIntegrationAcAgarwal.py" beforeDir="false" afterPath="$PROJECT_DIR$/XtsIntegrationAcAgarwal.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/example/sample.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/example/smartwebsocketexample.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/example/smartwebsocketexamplev2.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AngelIntegration.py" beforeDir="false" afterPath="$PROJECT_DIR$/AngelIntegration.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Credentials.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Credentials.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/master.csv" beforeDir="false" afterPath="$PROJECT_DIR$/master.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/master.txt" beforeDir="false" afterPath="$PROJECT_DIR$/master.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/running/runstrategy.txt" beforeDir="false" afterPath="$PROJECT_DIR$/running/runstrategy.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
