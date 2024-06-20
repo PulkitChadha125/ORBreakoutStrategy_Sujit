@@ -69,6 +69,7 @@ def get_user_settings():
                 "Target2Lotsize": int(row['Target2Lotsize']),"Target3Lotsize": int(row['Target3Lotsize']),"Target4Lotsize": int(row['Target4Lotsize']),
                 "BreakEven": float(row['BreakEven']),"ReEntry": int(row['ReEntry']),"Expiery": str(row['Expiery']),
                 "BaseSymbol":str(row['BaseSymbol']),"strike":None,"StrikeSelectionType":row['StrikeSelectionType'],
+                "StrikeDistance":int(row['StrikeDistance']),
                 "runonce":False,
                 "BuyPrice": None,
                 "SellPrice": None,
@@ -219,6 +220,7 @@ def main_strategy():
                         params['previousclose']>params["SellPrice"]
                 ):
                     params["TradeType"] = None
+
                     orderlog = (
                         f"{timestamp} Order range reset @ {params['BaseSymbol']}")
                     write_to_order_logs(orderlog)
@@ -359,6 +361,8 @@ def main_strategy():
                     params["TradeType"]= "BUYCE"
                     params["TradeExecuted"]= True
                     params["underlyinfltp"]=ltp
+                    params["slexecuted"] = False
+                    params["targetexecuted"] = True
                     params["count"]=params["count"]+1
                     if params["StrikeSelectionType"] == "ATM":
                         strike = custom_round(int(float(ltp)), params['BaseSymbol'])
@@ -378,6 +382,8 @@ def main_strategy():
                     print(formatted_date)
                     params["optionSymbol"]=f"{params['BaseSymbol']}{formatted_date}{params['strike']}CE"
                     print(params["optionSymbol"])
+                    write_to_order_logs(f'Strike selected call buy {params["optionSymbol"]}')
+
                     params["remaining"]=params['lotsize']
                     params["optionSymbolltp"] = AngelIntegration.get_ltp(segment="NFO", symbol=params['optionSymbol'],
                                                                          token=get_token(params['optionSymbol']))
@@ -417,7 +423,8 @@ def main_strategy():
                     params["TradeType"]= "BUYPE"
                     params["underlyinfltp"] = ltp
                     params["TradeExecuted"] = True
-
+                    params["slexecuted"] = False
+                    params["targetexecuted"] = True
                     if params["StrikeSelectionType"] == "ATM":
                         strike = custom_round(int(float(ltp)), params['BaseSymbol'])
                         putstrike = strike
@@ -436,6 +443,7 @@ def main_strategy():
                     print(formatted_date)
                     params["optionSymbol"] = f"{params['BaseSymbol']}{formatted_date}{params['strike']}PE"
                     print(params["optionSymbol"])
+                    write_to_order_logs(f'Strike selected put buy {params["optionSymbol"]}')
                     params["optionSymbolltp"] = AngelIntegration.get_ltp(segment="NFO", symbol=params['optionSymbol'],
                                                                          token=get_token(params['optionSymbol']))
                     params["tradeltp"] = params["optionSymbolltp"]
@@ -497,7 +505,7 @@ def main_strategy():
                         print(orderlog)
                         params["remaining"] = 0
                     if params["optionSymbolltp"]>=params["brkevn"] and params["brkevn"]>0:
-                        params["sl"]=params["tradeltp"]
+                        params["sl"]=params["tradeltp"]-20
                         params["brkevn"] = 0
                         orderlog = (f"{timestamp} Breakeven executed BUY CALL  @ {params['optionSymbolltp']}, Sl moved to cost= {params['sl']}")
                         write_to_order_logs(orderlog)
@@ -571,7 +579,7 @@ def main_strategy():
                         params["remaining"] = 0
                         print(orderlog)
                     if params["optionSymbolltp"]>=params["brkevn"] and params["brkevn"]>0:
-                        params["sl"]=params["tradeltp"]
+                        params["sl"]=params["tradeltp"]-20
                         params["brkevn"] = 0
                         orderlog = (f"{timestamp} Breakeven executed BUY PUT  @ {params['optionSymbolltp']}, Sl moved to cost= {params['sl']}")
                         write_to_order_logs(orderlog)
